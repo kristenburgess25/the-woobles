@@ -21,6 +21,11 @@ document.addEventListener('DOMContentLoaded', function () {
     .then((data) => {
       const products = data.products || data;
 
+      // ===== ERROR HANDLING IF ALTERNATE PRODUCT DATA USED ===== // 
+      if (!Array.isArray(products)) {
+        throw new Error("Invalid product data format.");
+      }
+
       // ===== FEATURED WOOBLE =====
       const featuredProduct = products.find((product) => {
         const tagsArray = product.tags
