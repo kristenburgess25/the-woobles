@@ -1,0 +1,154 @@
+<div id="wooble-category-page" class="page-width section-template">
+  <h1 class="title">Meet The Woobles</h1>
+  
+  {%- assign woobles_data = 'woobles-products.json' | asset_url -%}
+  <script id="wooble-data" type="application/json" data-source="{{ woobles_data }}"></script>
+
+  <div id="featured-wooble"></div>
+  <div id="beginner"></div>
+  <div id="beginner-plus"></div>
+  <div id="bundles"></div>
+  <div id="intermediate"></div>
+  <div id="accessory"></div>
+</div>
+
+{% javascript %}
+document.addEventListener('DOMContentLoaded', function () {
+  const source = document.getElementById('wooble-data').getAttribute('data-source');
+
+  fetch(source)
+    .then((response) => response.json())
+    .then((data) => {
+      const products = data.products || data;
+
+      // ===== FEATURED WOOBLE =====
+      const featuredProduct = products.find((product) => {
+        const tagsArray = product.tags
+          ? product.tags.split(',').map((t) => t.trim())
+          : [];
+        return tagsArray.includes("Featured");
+      });
+
+      if (featuredProduct) {
+        renderFeatured(featuredProduct);
+      }
+
+      // ===== CATEGORY BUCKETS =====
+      const sectionGroups = {
+        bundles: [],
+        intermediate: [],
+        "beginner-plus": [],
+        beginner: [],
+        accessory: [],
+      };
+
+      const assignedProductIds = new Set();
+      const featuredId = featuredProduct?.id;
+
+      products.forEach((product) => {
+        if (product.id === featuredId || assignedProductIds.has(product.id)) return;
+
+        const productType = (product.product_type || "").toLowerCase();
+        const title = product.title || "";
+
+        // Bundle takes top priority
+        if (title.includes("Bundle")) {
+          sectionGroups.bundles.push(product);
+        } else if (productType.includes("intermediate")) {
+          sectionGroups.intermediate.push(product);
+        } else if (productType.includes("beginner+")) {
+          sectionGroups["beginner-plus"].push(product);
+        } else if (
+          productType.includes("beginner") &&
+          !productType.includes("beginner+")
+        ) {
+          sectionGroups.beginner.push(product);
+        } else if (productType.includes("accessory")) {
+          sectionGroups.accessory.push(product);
+        } else {
+          console.warn("Uncategorized product:", product.title);
+          return;
+        }
+
+        assignedProductIds.add(product.id);
+      });
+
+      // ===== RENDER SECTIONS =====
+      Object.entries(sectionGroups).forEach(([sectionId, group]) => {
+        const sectionEl = document.getElementById(sectionId);
+        renderSection(sectionEl, sectionId, group);
+      });
+    })
+    .catch((err) => {
+      console.error("Failed to load woobles JSON:", err);
+    });
+
+  // ======= RENDER FEATURED =======
+  function renderFeatured(product) {
+    const container = document.getElementById("featured-wooble");
+    const description = product.body_html.split("</p>")[0] + "</p>";
+
+    container.innerHTML = `
+      <section class="featured-wooble" style="padding: 2rem; border-bottom: 2px solid #eee;">
+        <h2 style="font-size: 2rem; margin-bottom: 0.5rem;">Featured Wooble</h2>
+        <h3 style="font-size: 1.5rem; font-weight: bold;">${product.title}</h3>
+        ${description}
+        ${product.image?.src ? `
+          <img src="${product.image.src}" alt="${product.title}" style="max-width: 300px; margin-top: 1rem;" />
+        ` : ''}
+      </section>
+    `;
+  }
+
+  // ======= RENDER PRODUCT GROUP =======
+  function renderSection(container, title, products) {
+    if (!container) return;
+
+    let html = `<h2 style="font-size: 1.75rem; margin-top: 2rem; margin-bottom: 1rem;">${formatTitle(title)}</h2>`;
+    html += `<div class="wooble-grid" style="display: flex; flex-wrap: wrap; gap: 1rem;">`;
+
+    products.forEach((product) => {
+      const price = product.variants?.[0]?.price || "";
+      html += `
+        <div class="wooble-card" style="width: 200px; border: 1px solid #ddd; padding: 1rem; border-radius: 6px;">
+          <h3 style="font-size: 1rem; font-weight: bold;">${product.title}</h3>
+          ${product.image?.src ? `
+            <img src="${product.image.src}" alt="${product.title}" style="max-width: 100%; margin-top: 0.5rem;" />
+          ` : ''}
+          ${price ? `<p style="margin-top: 0.5rem;">$${price}</p>` : ''}
+        </div>
+      `;
+    });
+
+    html += `</div>`;
+    container.innerHTML = html;
+  }
+
+  function formatTitle(key) {
+    switch (key) {
+      case "bundles":
+        return "Bundles";
+      case "intermediate":
+        return "Intermediate Kits";
+      case "beginner-plus":
+        return "Beginner+ Kits";
+      case "beginner":
+        return "Beginner Kits";
+      case "accessory":
+        return "Accessory Kits";
+      default:
+        return key;
+    }
+  }
+});
+{% endjavascript %}
+
+
+{% schema %}
+{
+  "name": "Woobles Category Page",
+  "tag": "section",
+  "class": "section",
+  "settings": []
+}
+{% endschema %}
