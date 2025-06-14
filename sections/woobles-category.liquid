@@ -1,7 +1,25 @@
-{{ 'woobles-category.css' | asset_url | stylesheet_tag }}
-<div id="wooble-category-page" class="page-width section-template">
-  <h1 class="title">Meet The Woobles</h1>
-  
+{{ 'woobles-templates.js' | asset_url | script_tag }}
+{{ 'woobles-variables.css' | asset_url | stylesheet_tag }}
+{{ 'woobles-landing.css' | asset_url | stylesheet_tag }}
+{{ 'woobles-featured-product.css' | asset_url | stylesheet_tag }}
+{{ 'woobles-product-tile.css' | asset_url | stylesheet_tag }}
+
+{% if featured_wooble_image %}
+  <link
+    rel="preload"
+    as="image"
+    href="{{ featured_wooble_image }}"
+    fetchpriority="high">
+{% endif %}
+<!-- preloading featured/largest image improves performance, would be best if coming from server-rendered shopify data -->
+
+<div 
+  id="wooble-category-page" 
+  class="page-width section-template"
+  data-show-add-to-cart="{{ section.settings.show_add_to_cart }}"
+>
+  <h1 class="title">Meet the Woobles</h1>
+
   {%- assign woobles_data = 'woobles-products.json' | asset_url -%}
   <script id="wooble-data" type="application/json" data-source="{{ woobles_data }}"></script>
 
@@ -14,42 +32,30 @@
 </div>
 
 {% javascript %}
-document.addEventListener('DOMContentLoaded', function () {
-  // ======= LOAD JSON DATA =======
+document.addEventListener('DOMContentLoaded', () => {
   const source = document.getElementById('wooble-data')?.getAttribute('data-source');
-
-  if (!source) {
-    console.error("Woobles data source not found.");
-    return;
-  }
+  if (!source) return console.error("Woobles data source not found.");
 
   fetch(source)
-    .then(response => response.json())
+    .then(res => res.json())
     .then(data => {
-      // ======= VALIDATE AND EXTRACT PRODUCTS =======
       const products = Array.isArray(data.products)
         ? data.products
         : Array.isArray(data)
-          ? data
-          : null;
+        ? data
+        : null;
 
-      if (!products) {
-        throw new Error("Invalid JSON format: Expected array or { products: [] }");
-      }
+      if (!products) throw new Error("Invalid JSON format");
 
-      // ======= IDENTIFY FEATURED PRODUCT =======
-      const featuredProduct = products.find((product) => {
-        const tagsArray = product.tags
-          ? product.tags.split(',').map((t) => t.trim())
-          : [];
-        return tagsArray.includes("Featured");
+      const featuredProduct = products.find(p => {
+        const tags = p.tags?.split(',').map(t => t.trim().toLowerCase()) || [];
+        return tags.includes("featured");
       });
 
       if (featuredProduct) {
         renderFeatured(featuredProduct);
       }
 
-      // ======= INITIALIZE CATEGORY GROUPS =======
       const sectionGroups = {
         bundles: [],
         intermediate: [],
@@ -58,93 +64,57 @@ document.addEventListener('DOMContentLoaded', function () {
         accessory: [],
       };
 
-      const assignedProductIds = new Set();
+      const assignedIds = new Set();
       const featuredId = featuredProduct?.id;
 
-      // ======= ASSIGN PRODUCTS TO SECTIONS =======
       products.forEach(product => {
-        if (product.id === featuredId || assignedProductIds.has(product.id)) return;
+        if (product.id === featuredId || assignedIds.has(product.id)) return;
 
-        const productType = (product.product_type || "").toLowerCase();
-        const title = product.title || "";
+        const type = (product.product_type || "").toLowerCase();
+        const title = product.title?.toLowerCase() || "";
 
-        if (title.includes("Bundle")) {
-          sectionGroups.bundles.push(product);
-        } else if (productType.includes("intermediate")) {
-          sectionGroups.intermediate.push(product);
-        } else if (productType.includes("beginner+")) {
-          sectionGroups["beginner-plus"].push(product);
-        } else if (productType.includes("beginner")) {
-          sectionGroups.beginner.push(product);
-        } else if (productType.includes("accessory")) {
-          sectionGroups.accessory.push(product);
-        } else {
-          console.warn("Uncategorized product:", product.title);
-          return;
-        }
+        if (title.includes("bundle")) sectionGroups.bundles.push(product);
+        else if (type.includes("intermediate")) sectionGroups.intermediate.push(product);
+        else if (type.includes("beginner+") || type.includes("beginner plus")) sectionGroups["beginner-plus"].push(product);
+        else if (type.includes("beginner")) sectionGroups.beginner.push(product);
+        else if (type.includes("accessory")) sectionGroups.accessory.push(product);
+        else return console.warn("Uncategorized product:", product.title);
 
-        assignedProductIds.add(product.id);
+        assignedIds.add(product.id);
       });
 
-      // ======= RENDER EACH CATEGORY SECTION =======
-      Object.entries(sectionGroups).forEach(([sectionId, group]) => {
-        const sectionEl = document.getElementById(sectionId);
-        renderSection(sectionEl, sectionId, group);
+      Object.entries(sectionGroups).forEach(([id, group]) => {
+        const el = document.getElementById(id);
+        renderSection(el, id, group);
       });
     })
-
-    // ======= ERROR HANDLING =======
     .catch(err => {
-      console.error("Failed to load or parse woobles JSON:", err);
-      const fallback = document.querySelector(".woobles-category-page");
-      if (fallback) {
-        fallback.innerHTML = `<p style="color: red;">Oops! Failed to load Woobles data.</p>`;
-      }
+      console.error("Failed to load or parse JSON:", err);
+      document.querySelector(".woobles-category-page")?.insertAdjacentHTML(
+        'beforeend',
+        `<p style="color:red;">Oops! Failed to load Woobles data.</p>`
+      );
     });
 
-  // ======= RENDER FEATURED =======
-  function renderFeatured(product) {
+  const { productTileTemplate, featuredProductTemplate } = window.WooblesTemplates;
+
+  const renderFeatured = (product) => {
     const container = document.getElementById("featured-wooble");
-    const description = product.body_html.split("</p>")[0] + "</p>";
+    container.innerHTML = featuredProductTemplate(product);
+  };
 
-    container.innerHTML = `
-      <section class="featured-wooble">
-        <h2>Featured Wooble</h2>
-        <h3>${product.title}</h3>
-        ${description}
-        ${product.image?.src ? `
-          <img src="${product.image.src}" alt="${product.title}" />
-        ` : ''}
-      </section>
-    `;
-  }
-
-  // ======= RENDER CATEGORY SECTION =======
-  function renderSection(container, title, products) {
+  const renderSection = (container, title, products) => {
     if (!container) return;
 
-    let html = `<h2>${formatTitle(title)}</h2>`;
-    html += `<div class="wooble-grid">`;
-
-    products.forEach((product) => {
-      const price = product.variants?.[0]?.price || "";
-      html += `
-        <div class="wooble-card">
-          <h3>${product.title}</h3>
-          ${product.image?.src ? `
-            <img src="${product.image.src}" alt="${product.title}" />
-          ` : ''}
-          ${price ? `<p>$${price}</p>` : ''}
-        </div>
-      `;
+    let html = `<h2>${formatTitle(title)}</h2><div class="wooble-grid">`;
+    products.forEach(product => {
+      html += productTileTemplate(product);
     });
-
     html += `</div>`;
     container.innerHTML = html;
-  }
+  };
 
-  // ======= FORMAT TITLE DISPLAY =======
-  function formatTitle(key) {
+  const formatTitle = (key) => {
     switch (key) {
       case "bundles": return "Bundles";
       case "intermediate": return "Intermediate Kits";
@@ -153,7 +123,7 @@ document.addEventListener('DOMContentLoaded', function () {
       case "accessory": return "Accessory Kits";
       default: return key;
     }
-  }
+  };
 });
 {% endjavascript %}
 
@@ -162,6 +132,18 @@ document.addEventListener('DOMContentLoaded', function () {
   "name": "Woobles Category Page",
   "tag": "section",
   "class": "section",
-  "settings": []
+  "settings": [
+    {
+      "type": "product",
+      "id": "featured_wooble_product",
+      "label": "Featured Wooble Product"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_add_to_cart",
+      "label": "Show Add to Cart buttons on product tiles",
+      "default": false
+    }
+  ]
 }
 {% endschema %}
