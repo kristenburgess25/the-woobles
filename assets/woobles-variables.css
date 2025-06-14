@@ -1,0 +1,15 @@
+/* === Woobles Custom Design Variables === */
+
+:root {
+  /* Font colors */
+  --wooble-heading: #1a1a1a;       /* Main title color */
+  --wooble-subheading: #333333;   /* Smaller title or h5 text */
+  --wooble-body: #444444;         /* Paragraph and body text */
+
+  /* Tile background fallback */
+  --wooble-tile-bg: #f6f6f6;
+
+  /* Font family override (optional) */
+  --wooble-font-body: Jost ,sans-serif;
+  --wooble-font-heading: var(--wooble-font-body);
+}
