@@ -1,0 +1,70 @@
+/* === Featured Wooble Styles === */
+
+.featured-wooble {
+  position: relative;
+  background: linear-gradient(120deg, #ffd6ec, #d0f1ff, #ffeebf);
+  padding: 3rem 2rem 6rem;
+  border-radius: 1.5rem;
+  margin-bottom: 4rem;
+  overflow: hidden;
+  text-align: center;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+  font-family: var(--font-body-family, sans-serif);
+}
+
+.featured-wooble::before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 200%;
+  height: 160px;
+  background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 1440 320" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="%23ffffff" d="M0,288L48,272C96,256,192,224,288,197.3C384,171,480,149,576,149.3C672,149,768,171,864,186.7C960,203,1056,213,1152,186.7C1248,160,1344,96,1392,64L1440,32V320H1392C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320H0Z"/></svg>');
+  background-size: cover;
+  opacity: 0.5;
+  z-index: 1;
+}
+
+.featured-wooble * {
+  position: relative;
+  z-index: 2;
+}
+
+.featured-wooble h2 {
+  font-size: 2.4rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+  color: var(--wooble-heading);
+}
+
+.featured-wooble img {
+  display: block;
+  height: auto;
+  max-width: 100%;      /* prevent overflow on small screens */
+  margin: 1.5rem auto 1rem;
+  border-radius: 1.25rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); */
+  aspect-ratio: 1 / 1;
+}
+
+@media (max-width: 480px) {
+  .featured-wooble img {
+    width: 240px;
+  }
+}
+
+.featured-wooble h5 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--wooble-subheading);
+  font-family: var(--font-heading-family, sans-serif);
+}
+
+.featured-wooble p {
+  font-size: 1.4rem;
+  line-height: 1.6;
+  color: var(--wooble-body);
+  max-width: 600px;
+  margin: 0 auto;
+}
