@@ -27,7 +27,7 @@ window.WooblesTemplates = {
     `;
   },
 
-  productTileTemplate: (product) => {
+  productTileTemplate: (product, showATC = false) => {
     const price = product.variants?.[0]?.price || "";
     const bg = product.bg_color || "#f6f6f6";
     const gradient = `linear-gradient(135deg, ${bg}33, ${bg}aa)`;
@@ -48,13 +48,11 @@ window.WooblesTemplates = {
           </div>` : ""}
         <h3>${product.title}</h3>
         ${price ? `<p>$${price}</p>` : ""}
+        ${showATC ? `
+          <br />
+          <button class="add-to-cart-button">Add to Cart </button>
+        ` : ""}
       </div>
     `;
   }
 };
-
-  // ${showAddToCart ? `
-  //   <button class="add-to-cart-button" data-product-id="${product.id}">
-  //     Add to Cart
-  //   </button>
-  // ` : ""}
