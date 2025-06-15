@@ -4,6 +4,7 @@
 {{ 'woobles-featured-product.css' | asset_url | stylesheet_tag }}
 {{ 'woobles-product-tile.css' | asset_url | stylesheet_tag }}
 
+<!-- preloading featured/largest image improves performance, would be best if coming from server-rendered shopify data -->
 {% if featured_wooble_image %}
   <link
     rel="preload"
@@ -11,18 +12,20 @@
     href="{{ featured_wooble_image }}"
     fetchpriority="high">
 {% endif %}
-<!-- preloading featured/largest image improves performance, would be best if coming from server-rendered shopify data -->
 
 <div 
   id="wooble-category-page" 
   class="page-width section-template"
+  <!-- make show/hide ATC button from theme settings available on the page for the JS to utilize -->
   data-show-atc="{{ section.settings.show_add_to_cart_button }}"
 >
   <h1 class="title">Meet the Woobles</h1>
 
+  <!-- make woobles-products.json available on the page for the JS -->
   {%- assign woobles_data = 'woobles-products.json' | asset_url -%}
   <script id="wooble-data" type="application/json" data-source="{{ woobles_data }}"></script>
 
+  <!-- CATEGORIES SECTION LAYOUT -->
   <div id="featured-wooble"></div>
   <div id="beginner"></div>
   <div id="beginner-plus"></div>
@@ -33,78 +36,11 @@
 
 {% javascript %}
 const initCategoryPage = () => {
+  // get the product data set 
   const source = document.getElementById('wooble-data')?.getAttribute('data-source');
   if (!source) return console.error("Woobles data source not found.");
 
-  const { productTileTemplate, featuredProductTemplate } = window.WooblesTemplates;
-  let allProducts = [];
-
-  const renderFeatured = (product) => {
-    const container = document.getElementById("featured-wooble");
-    container.innerHTML = featuredProductTemplate(product);
-  };
-
-  const renderSection = (container, title, products, showATC) => {
-    if (!container) return;
-
-    let html = `<h2>${formatTitle(title)}</h2><div class="wooble-grid">`;
-    products.forEach(product => {
-      html += productTileTemplate(product, showATC);
-    });
-    html += `</div>`;
-    container.innerHTML = html;
-  };
-
-  const formatTitle = (key) => {
-    switch (key) {
-      case "bundles": return "Bundles";
-      case "intermediate": return "Intermediate Kits";
-      case "beginner-plus": return "Beginner+ Kits";
-      case "beginner": return "Beginner Kits";
-      case "accessory": return "Accessory Kits";
-      default: return key;
-    }
-  };
-
-  const renderAllTiles = (products) => {
-    const sectionGroups = {
-      bundles: [],
-      intermediate: [],
-      "beginner-plus": [],
-      beginner: [],
-      accessory: [],
-    };
-
-    const featuredId = products.find(p =>
-      p.tags?.split(',').map(t => t.trim().toLowerCase()).includes("featured")
-    )?.id;
-
-    const assignedIds = new Set();
-
-    products.forEach(product => {
-      if (product.id === featuredId || assignedIds.has(product.id)) return;
-
-      const type = (product.product_type || "").toLowerCase();
-      const title = product.title?.toLowerCase() || "";
-
-      if (title.includes("bundle")) sectionGroups.bundles.push(product);
-      else if (type.includes("intermediate")) sectionGroups.intermediate.push(product);
-      else if (type.includes("beginner+") || type.includes("beginner plus")) sectionGroups["beginner-plus"].push(product);
-      else if (type.includes("beginner")) sectionGroups.beginner.push(product);
-      else if (type.includes("accessory")) sectionGroups.accessory.push(product);
-      else return console.warn("Uncategorized product:", product.title);
-
-      assignedIds.add(product.id);
-    });
-
-    const showATC = document.getElementById('wooble-category-page')?.dataset?.showAtc === 'true';
-
-    Object.entries(sectionGroups).forEach(([id, group]) => {
-      const el = document.getElementById(id);
-      renderSection(el, id, group, showATC);
-    });
-  };
-
+  // "fetch" the product data and put into appropriate categories for rendering 
   fetch(source)
     .then(res => res.json())
     .then(data => {
@@ -128,7 +64,7 @@ const initCategoryPage = () => {
 
       renderAllTiles(products);
 
-      // Watch for setting toggles inside the Customizer
+      // watch for setting toggles inside the Customizer
       const root = document.getElementById('wooble-category-page');
       const observer = new MutationObserver(() => {
         renderAllTiles(allProducts);
@@ -145,6 +81,84 @@ const initCategoryPage = () => {
       console.error("Failed to load or parse JSON:", err);
     });
 };
+
+  // get template functions from the window 
+  const { productTileTemplate, featuredProductTemplate } = window.WooblesTemplates;
+  let allProducts = [];
+
+  // render featured wooble 
+  const renderFeatured = (product) => {
+    const container = document.getElementById("featured-wooble");
+    container.innerHTML = featuredProductTemplate(product);
+  };
+
+  // render each category and its title, products, ATC button on tiles if setting turned on 
+  const renderSection = (container, title, products, showATC) => {
+    if (!container) return;
+
+    let html = `<h2>${formatTitle(title)}</h2><div class="wooble-grid">`;
+    products.forEach(product => {
+      html += productTileTemplate(product, showATC);
+    });
+    html += `</div>`;
+    container.innerHTML = html;
+  };
+
+  // format the titles for categories 
+  const formatTitle = (key) => {
+    switch (key) {
+      case "bundles": return "Bundles";
+      case "intermediate": return "Intermediate Kits";
+      case "beginner-plus": return "Beginner+ Kits";
+      case "beginner": return "Beginner Kits";
+      case "accessory": return "Accessory Kits";
+      default: return key;
+    }
+  };
+
+  // render all product titles in their section groups 
+  const renderAllTiles = (products) => {
+    const sectionGroups = {
+      bundles: [],
+      intermediate: [],
+      "beginner-plus": [],
+      beginner: [],
+      accessory: [],
+    };
+
+    const featuredId = products.find(p =>
+      p.tags?.split(',').map(t => t.trim().toLowerCase()).includes("featured")
+    )?.id;
+
+    // Create a Set to track which product IDs have already been assigned to a section.
+    // Once a product has been categorized, its ID is added to the assignedIds set to prevent it from being categorized again
+    const assignedIds = new Set()
+    products.forEach(product => {
+      if (product.id === featuredId || assignedIds.has(product.id)) return;
+
+      const type = (product.product_type || "").toLowerCase();
+      const title = product.title?.toLowerCase() || "";
+
+      if (title.includes("bundle")) sectionGroups.bundles.push(product);
+      else if (type.includes("intermediate")) sectionGroups.intermediate.push(product);
+      else if (type.includes("beginner+") || type.includes("beginner plus")) sectionGroups["beginner-plus"].push(product);
+      else if (type.includes("beginner")) sectionGroups.beginner.push(product);
+      else if (type.includes("accessory")) sectionGroups.accessory.push(product);
+      else return console.warn("Uncategorized product:", product.title);
+
+      assignedIds.add(product.id);
+    });
+
+    const showATC = document.getElementById('wooble-category-page')?.dataset?.showAtc === 'true';
+
+    // loop through each section, grab the matching DOM element, and render the correct Woobles w/ renderSection()
+    Object.entries(sectionGroups).forEach(([id, group]) => {
+      const el = document.getElementById(id);
+      renderSection(el, id, group, showATC);
+    });
+  };
+
+
 
 // Initial load
 document.addEventListener('DOMContentLoaded', initCategoryPage);
