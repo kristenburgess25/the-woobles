@@ -13,10 +13,10 @@
     fetchpriority="high">
 {% endif %}
 
+<!-- make show/hide ATC button from theme settings available on the page for the JS to utilize -->
 <div 
   id="wooble-category-page" 
   class="page-width section-template"
-  <!-- make show/hide ATC button from theme settings available on the page for the JS to utilize -->
   data-show-atc="{{ section.settings.show_add_to_cart_button }}"
 >
   <h1 class="title">Meet the Woobles</h1>
@@ -157,8 +157,6 @@ const initCategoryPage = () => {
       renderSection(el, id, group, showATC);
     });
   };
-
-
 
 // Initial load
 document.addEventListener('DOMContentLoaded', initCategoryPage);
