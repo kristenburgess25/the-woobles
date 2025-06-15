@@ -1,9 +1,11 @@
-NOTE: This solution supports external JSON product data in the format provided. It is structured to support alternate product sets with the same field structure. To extend this further, additional validation or field mapping logic could be added.
-
-
 # 🧶 Woobles Category Page – Code Challenge Submission
 
 Welcome! This repository contains my submission for The Woobles front-end code challenge. I’ve implemented a fully responsive, performant, and accessible custom category landing page using **vanilla JavaScript, Liquid, and Shopify’s Online Store 2.0 framework**.
+
+This solution supports external JSON product data in the format provided. It is structured to support alternate product sets with the same field structure. To extend this further, additional validation or field mapping logic could be added.
+
+Note on Theme Editor Behavior:
+Due to Shopify's current handling of section re-rendering, toggling the “Add to Cart” button setting causes the section to temporarily disappear until saved. This does not affect the live storefront. In a production implementation, I would resolve this by refactoring the logic into a persistent app block or inline script that reliably reinitializes on shopify:section:load.
 
 ---
 
