@@ -13,13 +13,13 @@
     fetchpriority="high">
 {% endif %}
 
-<!-- make show/hide ATC button from theme settings available on the page for the JS to utilize -->
-<div 
-  id="wooble-category-page" 
-  class="page-width section-template"
-  data-show-atc="{{ section.settings.show_add_to_cart_button }}"
->
-  <h1 class="title">Meet the Woobles</h1>
+  <!-- make show/hide ATC button from theme settings available on the page for the JS to utilize -->
+  <div 
+    id="wooble-category-page" 
+    class="page-width section-template"
+    data-show-atc="{{ section.settings.show_add_to_cart_button }}"
+  >
+  <h1 class="title">{{ section.settings.categories_heading_text }}</h1>
 
   <!-- make woobles-products.json available on the page for the JS -->
   {%- assign woobles_data = 'woobles-products.json' | asset_url -%}
@@ -176,6 +176,12 @@ document.addEventListener('shopify:section:load', (event) => {
   "tag": "section",
   "class": "section",
   "settings": [
+    {
+      "type": "text",
+      "id": "categories_heading_text",
+      "label": "Text to display at the top of the page",
+      "default": "Meet the Woobles"
+    },
     {
       "type": "product",
       "id": "featured_wooble_product",
