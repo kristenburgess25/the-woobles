@@ -13,7 +13,6 @@ Due to Shopify's current handling of section re-rendering, toggling the “Add t
 
 You can view the working category page live here:  
 🔒 [**https://kristen-burgess-woobles.myshopify.com/pages/woobles-categories**](https://kristen-burgess-woobles.myshopify.com/pages/woobles-categories)  
-> _Note: This page is password protected. Please use the provided password to view._
 
 ---
 
