@@ -67,6 +67,10 @@ You can view the working category page live here:
 
 While the challenge is scoped tightly, the following are opportunities for improvement if this were production code:
 
+- **UX/UI Enhancements:**  
+  - Theme setting and UI for showing/hiding product ratings on the product cards  
+  - Theme setting for alternate layouts for "Featured wooble"  
+
 - **SEO Enhancements:**  
   - Add structured data (JSON-LD) for products  
   - Ensure meta tags, canonical URLs, and social sharing previews are in place  
@@ -76,7 +80,7 @@ While the challenge is scoped tightly, the following are opportunities for impro
   - Enable keyboard focus states and alt text auditing for screen readers  
 
 - **Performance Improvements:**  
-  - In a live store, fetching product data via Shopify’s Storefront API or Liquid would be preferable  
+  - In a live store, fetching product data (especially images) via Shopify’s Storefront API or Liquid would be preferable and greatly improve performance speeds 
   - Images could be converted to responsive sizes with `srcset` for sharper mobile rendering  
 
 ---
